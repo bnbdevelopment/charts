@@ -2,5 +2,5 @@ apiVersion: v2
 name: webstats
 description: Application chart for webstats application, designed to track website traffic and user behavior.
 type: application
-version: 0.1.1
+version: 0.1.2
 appVersion: "1.16.0"

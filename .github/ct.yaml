@@ -1,0 +1,7 @@
+chart-dirs:
+  - .
+helm-extra-args: "--timeout 10m"
+validate-maintainers: false
+check-version-increment: true
+# chart-repos:
+#   - bitnami=https://charts.bitnami.com/bitnami

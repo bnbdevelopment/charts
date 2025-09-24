@@ -1,0 +1,42 @@
+name: Lint Helm charts
+
+on:
+  pull_request:
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/Chart.yaml'
+      - '**/values.yaml'
+      - '**/templates/**'
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.1
+
+      - name: List changed charts
+        id: list
+        run: |
+          changed=$(ct list-changed --config .github/ct.yaml | tr '\n' ' ')
+          echo "changed=$changed" >> $GITHUB_OUTPUT
+
+      - name: Lint charts
+        if: steps.list.outputs.changed != ''
+        run: |
+          ct lint --config .github/ct.yaml
+
+      - name: Fail if no version bump
+        if: steps.list.outputs.changed != ''
+        run: |
+          ct lint --config .github/ct.yaml --check-version-increment

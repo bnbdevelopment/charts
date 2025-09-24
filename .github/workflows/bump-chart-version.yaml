@@ -1,0 +1,75 @@
+# name: Bump Helm chart version
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       chart:
+#         description: Chart directory (e.g., webstats)
+#         required: true
+#         type: string
+#       bump:
+#         description: Semver bump type (patch, minor, major)
+#         required: true
+#         default: patch
+#         type: choice
+#         options: [patch, minor, major]
+
+# jobs:
+#   bump:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write
+#       pull-requests: write
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+
+#       - name: Set up Node (for semver tool)
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+
+#       - name: Install semver CLI
+#         run: npm i -g semver
+
+#       - name: Install yq
+#         run: |
+#           sudo wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64"
+#           sudo chmod +x /usr/local/bin/yq
+
+#       - name: Compute next version and update Chart.yaml
+#         id: bump
+#         run: |
+#           set -euo pipefail
+#           CHART_DIR="${{ github.event.inputs.chart }}"
+#           BUMP="${{ github.event.inputs.bump }}"
+#           FILE="$CHART_DIR/Chart.yaml"
+#           if [ ! -f "$FILE" ]; then
+#             echo "Chart not found: $FILE" >&2
+#             exit 1
+#           fi
+#           current=$(yq '.version' "$FILE")
+#           if [ -z "$current" ] || [ "$current" = "null" ]; then
+#             echo "version not found in $FILE" >&2
+#             exit 1
+#           fi
+#           next=$(semver -i "$BUMP" "$current")
+#           yq -i ".version = \"$next\"" "$FILE"
+#           echo "next=$next" >> $GITHUB_OUTPUT
+
+#       - name: Create Pull Request
+#         uses: peter-evans/create-pull-request@v6
+#         with:
+#           commit-message: "chore(${ { github.event.inputs.chart } }): bump chart version to ${{ steps.bump.outputs.next }}"
+#           title: "chore(${{ github.event.inputs.chart }}): bump chart version to ${{ steps.bump.outputs.next }}"
+#           body: |
+#             Automated version bump.
+
+#             Chart: `${{ github.event.inputs.chart }}`
+#             New version: `${{ steps.bump.outputs.next }}`
+#           add-paths: |
+#             ${{ github.event.inputs.chart }}/Chart.yaml
+#           branch: bump/${{ github.event.inputs.chart }}-${{ steps.bump.outputs.next }}
+#           delete-branch: true

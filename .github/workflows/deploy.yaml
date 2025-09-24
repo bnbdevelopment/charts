@@ -49,13 +49,26 @@ jobs:
         run: |
           # Use git to find changed chart directories
           changed_charts=""
-          for chart_dir in */; do
-            if [ -f "${chart_dir}Chart.yaml" ]; then
-              if git diff --name-only HEAD~1 HEAD | grep -q "^${chart_dir}"; then
+          
+          # Check if we have a previous commit to compare against
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            # Compare with previous commit
+            for chart_dir in */; do
+              if [ -f "${chart_dir}Chart.yaml" ]; then
+                if git diff --name-only HEAD~1 HEAD | grep -q "^${chart_dir}"; then
+                  changed_charts="${changed_charts}${chart_dir} "
+                fi
+              fi
+            done
+          else
+            # If no previous commit, check all charts (first push scenario)
+            for chart_dir in */; do
+              if [ -f "${chart_dir}Chart.yaml" ]; then
                 changed_charts="${changed_charts}${chart_dir} "
               fi
-            fi
-          done
+            done
+          fi
+          
           # Fallback to ct if git method doesn't find anything
           if [ -z "$changed_charts" ]; then
             changed_charts=$(ct list-changed --config .github/ct.yaml | tr '\n' ' ')

@@ -47,8 +47,20 @@ jobs:
       - name: Determine changed charts
         id: list
         run: |
-          changed=$(ct list-changed --config .github/ct.yaml | tr '\n' ' ')
-          echo "changed=$changed" >> $GITHUB_OUTPUT
+          # Use git to find changed chart directories
+          changed_charts=""
+          for chart_dir in */; do
+            if [ -f "${chart_dir}Chart.yaml" ]; then
+              if git diff --name-only HEAD~1 HEAD | grep -q "^${chart_dir}"; then
+                changed_charts="${changed_charts}${chart_dir} "
+              fi
+            fi
+          done
+          # Fallback to ct if git method doesn't find anything
+          if [ -z "$changed_charts" ]; then
+            changed_charts=$(ct list-changed --config .github/ct.yaml | tr '\n' ' ')
+          fi
+          echo "changed=$changed_charts" >> $GITHUB_OUTPUT
 
       - name: Package and push changed charts to GAR
         if: steps.list.outputs.changed != ''

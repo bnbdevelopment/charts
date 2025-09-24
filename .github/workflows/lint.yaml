@@ -1,6 +1,13 @@
 name: Lint Helm charts
 
 on:
+  push:
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/Chart.yaml'
+      - '**/values.yaml'
+      - '**/templates/**'
   pull_request:
     paths:
       - '**/*.yaml'
